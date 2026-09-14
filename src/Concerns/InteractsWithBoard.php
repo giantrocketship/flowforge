@@ -578,6 +578,11 @@ trait InteractsWithBoard
 
     /**
      * Get board column actions with proper context.
+     *
+     * Uses __invoke() to set column arguments so they are serialized
+     * into the wire:click handler via getInvokedArguments().
+     *
+     * @return array<Action>
      */
     public function getBoardColumnActions(string $columnId): array
     {
@@ -585,10 +590,7 @@ trait InteractsWithBoard
         $actions = [];
 
         foreach ($board->getColumnActions() as $action) {
-            $actionClone = $action->getClone();
-            $actionClone->livewire($this);
-            $actionClone->arguments(['column' => $columnId]);
-            $actions[] = $actionClone;
+            $actions[] = $action(['column' => $columnId])->livewire($this);
         }
 
         return $actions;
