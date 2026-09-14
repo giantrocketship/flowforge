@@ -52,6 +52,34 @@ trait InteractsWithBoard
     }
 
     /**
+     * Rebuild the board after Livewire applies a table state update.
+     *
+     * booted() runs before incoming property updates are applied, so a board
+     * whose column set, query or swimlanes depend on $tableFilters or
+     * $tableSearch is built from the previous request's state and renders one
+     * round trip stale. Toggling a filter that adds or removes columns returns
+     * the old column set, and it stays wrong until something unrelated triggers
+     * another render.
+     *
+     * booted() still builds the board, because cacheBoardActions() has to run
+     * before Filament processes the request; this only rebuilds it once the new
+     * state is actually in place.
+     *
+     * Only table state is rebuilt on. Rebuilding on every property update would
+     * also fire for $columnCardLimits, which load-more-on-scroll writes to, and
+     * discard the pagination it just set.
+     */
+    public function updatedInteractsWithBoard(string $property): void
+    {
+        if (! str_starts_with($property, 'tableFilters') && ! str_starts_with($property, 'tableSearch')) {
+            return;
+        }
+
+        $this->board = $this->board($this->makeBoard());
+        $this->cacheBoardActions();
+    }
+
+    /**
      * Cache board actions for Filament's action system.
      */
     protected function cacheBoardActions(): void
